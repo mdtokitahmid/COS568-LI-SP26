@@ -1,8 +1,0 @@
-=== Dataset: fb_100M_public_uint64 | Index: HybridPGMLIPPAsync | Workload: ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
-Repeating lookup code 3 time(s).
-Using 1 thread(s).
-read 100000000 values from ./data/fb_100M_public_uint64 in 333 ms (300.3 M values/s)
-read 2000000 values from ./data/fb_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix in 23 ms (86.9565 M values/s)
-read 99800000 values from ./data/fb_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix_bulkload in 698 ms (142.98 M values/s)
-Data is unique.
-Variable rsum was: 0

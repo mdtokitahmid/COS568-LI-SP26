@@ -17,10 +17,11 @@ fb*.csv
 results/
 
 analysis_results/
-*.pngbenchmark_*.out
+benchmark_*.out
 benchmark_*.err
-scripts/__pycache__/
+**/__pycache__/
+*.pyc
 report/*.aux
 report/*.log
 report/*.out
-build/
+claude.md

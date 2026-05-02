@@ -17,14 +17,14 @@ RESULTS_DIR=./results
 mkdir -p "$RESULTS_DIR"
 
 DATASETS=(
-    "fb_100M_public_uint64"
+    # "fb_100M_public_uint64"
     "books_100M_public_uint64"
-    "osmc_100M_public_uint64"
+    # "osmc_100M_public_uint64"
 )
 
 WORKLOAD_SUFFIXES=(
     "ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix"
-    "ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix"
+    # "ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix"
 )
 
 for DATASET in "${DATASETS[@]}"; do

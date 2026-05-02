@@ -1,5 +1,0 @@
-=== Dataset: osmc_100M_public_uint64 | Index: HybridPGMLIPPAsync | Workload: ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
-Repeating lookup code 3 time(s).
-Using 1 thread(s).
-read 100000000 values from ./data/osmc_100M_public_uint64 in 650 ms (153.846 M values/s)
-read 2000000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix in 53 ms (37.7358 M values/s)
