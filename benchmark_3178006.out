@@ -1,0 +1,68 @@
+=== Dataset: books_100M_public_uint64 | Index: DynamicPGM | Workload: ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/books_100M_public_uint64 in 330 ms (303.03 M values/s)
+read 2000000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix in 23 ms (86.9565 M values/s)
+read 98200000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix_bulkload in 653 ms (150.383 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: DynamicPGM,3783572,3708973,3689518index size,1703241188Throughput: ,2.77059,2.84697,2.81669Variant: ,LinearSearchVariant: ,32
+Variable rsum was: 0
+RESULT: DynamicPGM,2918503,2906838,2906460index size,1700049408Throughput: ,2.55871,2.57588,2.60992Variant: ,InterpolationSearchVariant: ,128
+Variable rsum was: 0
+RESULT: DynamicPGM,2824869,2844084,2843993index size,1700011168Throughput: ,2.53464,2.64227,2.62363Variant: ,InterpolationSearchVariant: ,256
+=== Dataset: books_100M_public_uint64 | Index: LIPP | Workload: ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/books_100M_public_uint64 in 284 ms (352.113 M values/s)
+read 2000000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix in 18 ms (111.111 M values/s)
+read 98200000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix_bulkload in 548 ms (179.197 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: LIPP,9455315,7561057,5394955index size,11753613200Throughput: ,3.79033,3.37169,3.44392
+=== Dataset: books_100M_public_uint64 | Index: HybridPGMLIPP | Workload: ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/books_100M_public_uint64 in 293 ms (341.297 M values/s)
+read 2000000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix in 19 ms (105.263 M values/s)
+read 98200000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix_bulkload in 571 ms (171.979 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,9442755,7577777,5426300index size,11722646308Throughput: ,2.05484,2.04597,2.08518Variant: ,64Variant: ,1
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5394334,7524199,5397075index size,11722645408Throughput: ,2.09247,2.07447,2.06434Variant: ,128Variant: ,1
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5413151,7544651,5410792index size,11722645168Throughput: ,2.10319,2.08158,2.08825Variant: ,256Variant: ,1
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5405848,5468057,7628315index size,11686069032Throughput: ,2.88346,2.85725,2.8753Variant: ,64Variant: ,5
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5440123,5461189,7605919index size,11686067432Throughput: ,2.81299,2.83046,2.78565Variant: ,128Variant: ,5
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5477202,5448849,7593238index size,11686067012Throughput: ,2.84724,2.85746,2.85307Variant: ,256Variant: ,5
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5447251,5460321,7620201index size,11686069032Throughput: ,2.86687,2.86235,2.8858Variant: ,64Variant: ,10
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5407300,5438911,7605663index size,11686067432Throughput: ,2.78798,2.80798,2.82239Variant: ,128Variant: ,10
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5421565,5435628,7586800index size,11686067012Throughput: ,2.86486,2.85361,2.82561Variant: ,256Variant: ,10
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5428014,5405344,7614246index size,11686069032Throughput: ,2.87199,2.86803,2.85674Variant: ,64Variant: ,20
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5415822,5440754,7588775index size,11686067432Throughput: ,2.80161,2.81423,2.82982Variant: ,128Variant: ,20
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,5388443,5404524,7593274index size,11686067012Throughput: ,2.83482,2.84513,2.85182Variant: ,256Variant: ,20
+=== Dataset: books_100M_public_uint64 | Index: HybridPGMLIPPAsync | Workload: ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/books_100M_public_uint64 in 297 ms (336.7 M values/s)
+read 2000000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix in 19 ms (105.263 M values/s)
+read 98200000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix_bulkload in 574 ms (171.08 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,9557129,7650606,5452432index size,11686069032Throughput: ,3.5178,3.44362,3.53423Variant: ,64Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5446339,5418399,5475232index size,11686067432Throughput: ,3.46448,3.4734,3.47555Variant: ,128Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5468980,5483308,5522149index size,11686067012Throughput: ,3.49567,3.51372,3.4998Variant: ,256Variant: ,2000000
+
+=== Done: all methods on books_100M_public_uint64 | ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix ===

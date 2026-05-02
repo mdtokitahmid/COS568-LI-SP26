@@ -1,230 +1,341 @@
+#!/usr/bin/env python3
 """
-Milestone 3 Analysis — Async Hybrid DPGM + LIPP
-================================================
-Generates 12 bar plots across 3 datasets × 2 workloads × 2 metrics:
-  Datasets  : Facebook (fb), Books (books), OSMC (osmc)
-  Workloads : 10% insert (90% lookup), 90% insert (10% lookup)
-  Metrics   : Throughput (Mops/s), Index size (GB)
+Milestone 3 — 3 portrait SVGs (one per dataset).
+Each SVG has 4 stacked horizontal bar panels:
+  Throughput 10% | Index Size 10% | Throughput 90% | Index Size 90%
+Data: CSV files, last occurrence per (index, variant) combo.
 
-Output: one PNG per dataset saved to analysis_results/
-  milestone3_fb.png
-  milestone3_books.png
-  milestone3_osmc.png
-
-Run from the project root:
-    python scripts/analysis_m3.py
+Run:  python scripts/analysis_m3.py
 """
 
-import os
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
+import csv, html, os
+from typing import Dict, List, Optional, Tuple
+try:
+    import cairosvg
+    _HAVE_CAIRO = True
+except ImportError:
+    _HAVE_CAIRO = False
 
 RESULTS_DIR = "results"
 OUTPUT_DIR  = "analysis_results"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-DATASETS = {
-    "fb":    "fb_100M_public_uint64",
-    "books": "books_100M_public_uint64",
-    "osmc":  "osmc_100M_public_uint64",
+DATASETS = [
+    "fb_100M_public_uint64",
+    "books_100M_public_uint64",
+    "osmc_100M_public_uint64",
+]
+DATASET_LABELS = {
+    "fb_100M_public_uint64":    "Facebook (FB)",
+    "books_100M_public_uint64": "Books",
+    "osmc_100M_public_uint64":  "OSMC",
 }
-
 WORKLOAD_SUFFIX = {
     "10pct": "ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix",
     "90pct": "ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix",
 }
-
-INDEXES = ["DynamicPGM", "LIPP", "HybridPGMLIPP", "HybridPGMLIPPAsync"]
+INDEXES = ["DynamicPGM", "LIPP", "HybridPGMLIPP", "ARIA"]
 COLORS  = {
-    "DynamicPGM":        "#4C72B0",
-    "LIPP":              "#DD8452",
-    "HybridPGMLIPP":     "#55A868",
-    "HybridPGMLIPPAsync":"#C44E52",
+    "DynamicPGM":         "#4C72B0",
+    "LIPP":               "#DD8452",
+    "HybridPGMLIPP":      "#55A868",
+    "ARIA": "#C44E52",
 }
+CSV_COLS = [
+    "index_name", "build_time_ns1", "build_time_ns2", "build_time_ns3",
+    "index_size_bytes", "mixed_throughput_mops1", "mixed_throughput_mops2",
+    "mixed_throughput_mops3", "search_method", "value", "policy",
+]
+
+Row = Dict[str, object]
 
 
-# ---------------------------------------------------------------------------
-def best_row(df, index_name):
-    """Return the row with the highest mean throughput for index_name."""
-    rows = df[df["index_name"] == index_name].copy()
-    if rows.empty:
-        return None
-    rows["mean_tput"] = rows[
-        ["mixed_throughput_mops1", "mixed_throughput_mops2", "mixed_throughput_mops3"]
-    ].mean(axis=1)
-    return rows.loc[rows["mean_tput"].idxmax()]
+def to_float(v, default=0.0):
+    try:
+        return float(v) if v not in (None, "") else default
+    except (TypeError, ValueError):
+        return default
 
 
-def extract(df):
-    """
-    Returns dicts keyed by index name:
-        throughput[index] = best mean throughput (Mops/s)
-        size_gb[index]    = index size in GB
-        hyperparam[index] = human-readable best hyperparams
-    Missing indexes are filled with 0.
-    """
-    throughput, size_gb, hyperparam = {}, {}, {}
+def load_csv(path: str, workload: str) -> List[Row]:
+    raw: List[Row] = []
+    with open(path, newline="") as f:
+        for line in csv.reader(f):
+            if not line or line[0].strip() == "index_name":
+                continue
+            if len(line) < 8:
+                continue
+            row: Row = {"workload": workload}
+            for i, col in enumerate(CSV_COLS):
+                row[col] = line[i].strip() if i < len(line) else ""
+            for col in CSV_COLS[1:8]:
+                row[col] = to_float(row[col])
+            raw.append(row)
+
+    # Last occurrence per (index, variant) wins
+    seen: Dict[tuple, Row] = {}
+    for row in raw:
+        key = (row["index_name"],
+               str(row.get("search_method", "")),
+               str(row.get("value", "")),
+               str(row.get("policy", "")))
+        seen[key] = row
+    return list(seen.values())
+
+
+def load_dataset(dataset: str) -> Dict[str, List[Row]]:
+    out = {}
+    for tag, suffix in WORKLOAD_SUFFIX.items():
+        path = os.path.join(RESULTS_DIR, f"{dataset}_{suffix}_results_table.csv")
+        out[tag] = load_csv(path, tag) if os.path.exists(path) else []
+    return out
+
+
+def mean_tput(row: Row) -> float:
+    return (to_float(row["mixed_throughput_mops1"])
+          + to_float(row["mixed_throughput_mops2"])
+          + to_float(row["mixed_throughput_mops3"])) / 3.0
+
+
+def best_row(rows: List[Row], index_name: str) -> Optional[Row]:
+    cands = [r for r in rows if r["index_name"] == index_name]
+    return max(cands, key=mean_tput) if cands else None
+
+
+def hyperparam(index_name: str, row: Optional[Row]) -> str:
+    if row is None:
+        return ""
+    sm  = str(row.get("search_method", "")).strip()
+    val = str(row.get("value",         "")).strip()
+    pol = str(row.get("policy",        "")).strip()
+
+    def fmt_num(s: str) -> str:
+        try:
+            n = int(float(s))
+            if n >= 1_000_000: return f"{n // 1_000_000}M"
+            if n >= 1_000:     return f"{n // 1_000}K"
+            return str(n)
+        except (ValueError, TypeError):
+            return s
+
+    if index_name == "DynamicPGM":
+        parts = ([sm] if sm else []) + ([f"ε={val}"] if val else [])
+        return ", ".join(parts)
+    if index_name == "LIPP":
+        return ""
+    if index_name == "HybridPGMLIPP":
+        parts = ([f"ε={sm}"] if sm else []) + ([f"p={val}"] if val else [])
+        return ", ".join(parts)
+    if index_name == "ARIA":
+        parts = (([f"ε={sm}"] if sm else [])
+                 + ([f"flush={fmt_num(val)}"] if val else [])
+                 + ([pol] if pol else []))
+        return ", ".join(parts)
+    return ""
+
+
+def extract(rows: List[Row]) -> Tuple[Dict, Dict, Dict]:
+    tput, size, hyper = {}, {}, {}
     for idx in INDEXES:
-        row = best_row(df, idx)
-        if row is None:
-            throughput[idx] = 0.0
-            size_gb[idx]    = 0.0
-            hyperparam[idx] = "N/A"
-            continue
-        throughput[idx] = row["mean_tput"]
-        size_gb[idx]    = row["index_size_bytes"] / 1e9
-        sm  = str(row.get("search_method", "")).strip()
-        val = str(row.get("value", "")).strip()
-        if idx == "HybridPGMLIPPAsync":
-            hyperparam[idx] = f"ε={sm}, flush={val}"
-        elif idx == "HybridPGMLIPP":
-            hyperparam[idx] = f"ε={sm}, flush={val}%"
-        elif idx == "DynamicPGM":
-            hyperparam[idx] = f"{sm}, ε={val}"
+        row = best_row(rows, idx)
+        tput[idx]  = mean_tput(row) if row else 0.0
+        size[idx]  = to_float(row["index_size_bytes"]) / 1e9 if row else 0.0
+        hyper[idx] = hyperparam(idx, row)
+    return tput, size, hyper
+
+
+# ── SVG helpers ───────────────────────────────────────────────────────────────
+
+def T(x, y, text, sz=10, anchor="middle", bold=False, color="#222"):
+    fw = "bold" if bold else "normal"
+    return (f'<text x="{x:.1f}" y="{y:.1f}" font-family="Arial,sans-serif" '
+            f'font-size="{sz}" font-weight="{fw}" fill="{color}" '
+            f'text-anchor="{anchor}">{html.escape(str(text))}</text>')
+
+
+def hpanel(x0: float, y0: float, pw: float, ph: float,
+           title: str, values: Dict[str, float], xlabel: str,
+           hyperparams: Optional[Dict[str, str]] = None) -> List[str]:
+    """One horizontal-bar panel at pixel position (x0,y0) size (pw×ph)."""
+    out: List[str] = []
+
+    # Panel background + border
+    out.append(f'<rect x="{x0:.1f}" y="{y0:.1f}" width="{pw:.1f}" height="{ph:.1f}" '
+               f'fill="#f7f9fc" rx="5" stroke="#b0b8c8" stroke-width="1"/>')
+
+    # Title
+    out.append(T(x0 + pw / 2, y0 + 20, title, sz=12, bold=True))
+
+    pad_l = 148   # index name labels
+    pad_r = 58    # value labels
+    pad_t = 32    # below title
+    pad_b = 34    # x-axis ticks + label
+
+    bx = x0 + pad_l
+    by = y0 + pad_t
+    bw = pw - pad_l - pad_r
+    bh = ph - pad_t - pad_b
+
+    n     = len(INDEXES)
+    slot  = bh / n
+    bar_h = slot * 0.52
+
+    vmax  = max((values.get(i, 0.0) for i in INDEXES), default=1.0)
+    vmax  = (vmax * 1.20) if vmax > 0 else 1.0
+    scale = bw / vmax
+
+    # Grid lines + tick labels
+    for k in range(5):
+        vt = vmax * k / 4
+        xt = bx + vt * scale
+        out.append(f'<line x1="{xt:.1f}" y1="{by:.1f}" x2="{xt:.1f}" '
+                   f'y2="{by+bh:.1f}" stroke="#dde3ec" stroke-width="1"/>')
+        out.append(T(xt, by + bh + 15, f"{vt:.1f}", sz=9))
+
+    # Axis lines
+    out.append(f'<line x1="{bx:.1f}" y1="{by:.1f}" x2="{bx:.1f}" '
+               f'y2="{by+bh:.1f}" stroke="#888" stroke-width="1"/>')
+    out.append(f'<line x1="{bx:.1f}" y1="{by+bh:.1f}" x2="{bx+bw:.1f}" '
+               f'y2="{by+bh:.1f}" stroke="#888" stroke-width="1"/>')
+
+    # x-axis label
+    out.append(T(bx + bw / 2, y0 + ph - 8, xlabel, sz=10, bold=True, color="#555"))
+
+    # Bars + labels
+    for i, idx in enumerate(INDEXES):
+        val   = values.get(idx, 0.0)
+        bar_y = by + i * slot + (slot - bar_h) / 2
+        bar_w = max(val * scale, 0)
+        hp    = (hyperparams or {}).get(idx, "")
+
+        # Subtle bar background track
+        out.append(f'<rect x="{bx:.1f}" y="{bar_y:.1f}" width="{bw:.1f}" '
+                   f'height="{bar_h:.1f}" fill="#e8ecf2" rx="2"/>')
+        # Colored bar
+        out.append(f'<rect x="{bx:.1f}" y="{bar_y:.1f}" width="{bar_w:.2f}" '
+                   f'height="{bar_h:.1f}" fill="{COLORS[idx]}" opacity="0.90" rx="2"/>')
+
+        # Index name + optional hyperparam sub-label (left)
+        if hp:
+            name_y = bar_y + bar_h / 2
+            out.append(T(bx - 7, name_y,      idx, sz=9.5, anchor="end"))
+            out.append(T(bx - 7, name_y + 11, hp,  sz=8,   anchor="end", color="#777"))
         else:
-            hyperparam[idx] = ""
-    return throughput, size_gb, hyperparam
+            mid_y = bar_y + bar_h / 2 + 4
+            out.append(T(bx - 7, mid_y, idx, sz=10, anchor="end"))
+
+        # Value label (right of bar)
+        lbl   = f"{val:.2f}" if val > 0 else "—"
+        mid_y = bar_y + bar_h / 2 + 4
+        out.append(T(bx + bar_w + 5, mid_y, lbl, sz=9.5, anchor="start", bold=True))
+
+    return out
 
 
-def bar_plot(ax, values, title, ylabel, annotate=None):
-    """Draw one bar chart with one bar per index."""
-    x    = range(len(INDEXES))
-    bars = ax.bar(x, [values[i] for i in INDEXES],
-                  color=[COLORS[i] for i in INDEXES],
-                  edgecolor="black", linewidth=0.6, width=0.5)
+def write_dataset_png(path: str, dataset_label: str,
+                      tput10: Dict, size10: Dict, hyper10: Dict,
+                      tput90: Dict, size90: Dict, hyper90: Dict) -> None:
+    """2x2 grid PNG — dataset name as sole title, no legend, no footer."""
 
-    for bar, idx in zip(bars, INDEXES):
-        h = bar.get_height()
-        if h == 0:
-            continue
-        label = f"{h:.2f}"
-        if annotate and annotate.get(idx):
-            label += f"\n({annotate[idx]})"
-        ax.text(bar.get_x() + bar.get_width() / 2, h * 1.01,
-                label, ha="center", va="bottom", fontsize=6.5)
+    PAD_X   = 30
+    PAD_TOP = 42    # dataset name only
+    PAD_BOT = 14    # small bottom margin
+    GAP_X   = 20
+    GAP_Y   = 20
 
-    ax.set_title(title, fontsize=10, pad=6)
-    ax.set_ylabel(ylabel, fontsize=9)
-    ax.set_xticks(list(x))
-    ax.set_xticklabels(INDEXES, fontsize=8, rotation=15, ha="right")
-    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
-    max_val = max((values[i] for i in INDEXES), default=1)
-    ax.set_ylim(0, max_val * 1.25 if max_val > 0 else 1)
-    ax.grid(axis="y", linestyle="--", alpha=0.5)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    SVG_W   = 800
+    panel_w = (SVG_W - 2 * PAD_X - GAP_X) // 2
 
+    SVG_H   = 800
+    panel_h = (SVG_H - PAD_TOP - PAD_BOT - GAP_Y) // 2
 
-# ---------------------------------------------------------------------------
-def process_dataset(tag, dataset):
-    """
-    Load CSVs for one dataset, print summary tables, produce a 2×2 figure,
-    and save it.  Returns True if at least one CSV was found.
-    """
-    csv_10 = os.path.join(RESULTS_DIR,
-                          f"{dataset}_{WORKLOAD_SUFFIX['10pct']}_results_table.csv")
-    csv_90 = os.path.join(RESULTS_DIR,
-                          f"{dataset}_{WORKLOAD_SUFFIX['90pct']}_results_table.csv")
+    grid = [
+        [
+            (tput10, hyper10, "Throughput — 10% Insert (90% Lookup)", "Mops/s"),
+            (tput90, hyper90, "Throughput — 90% Insert (10% Lookup)", "Mops/s"),
+        ],
+        [
+            (size10, hyper10, "Index Size — 10% Insert (90% Lookup)", "GB"),
+            (size90, hyper90, "Index Size — 90% Insert (10% Lookup)", "GB"),
+        ],
+    ]
 
-    has_10 = os.path.exists(csv_10)
-    has_90 = os.path.exists(csv_90)
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" '
+        f'width="{SVG_W}" height="{SVG_H}">',
+        '<rect width="100%" height="100%" fill="#ffffff"/>',
+        T(SVG_W / 2, 26, dataset_label, sz=15, bold=True),
+        f'<line x1="{PAD_X}" y1="34" x2="{SVG_W-PAD_X}" y2="34" '
+        f'stroke="#cccccc" stroke-width="0.8"/>',
+    ]
 
-    if not has_10 and not has_90:
-        print(f"[{tag}] No result CSVs found — skipping.")
-        return False
+    for r, row_panels in enumerate(grid):
+        for c, (vals, hypers, title, xlabel) in enumerate(row_panels):
+            x0 = PAD_X + c * (panel_w + GAP_X)
+            y0 = PAD_TOP + r * (panel_h + GAP_Y)
+            parts.extend(hpanel(x0, y0, panel_w, panel_h, title, vals, xlabel, hypers))
 
-    COLS = ["index_name","build_time_ns1","build_time_ns2","build_time_ns3",
-            "index_size_bytes","mixed_throughput_mops1","mixed_throughput_mops2",
-            "mixed_throughput_mops3","search_method","value"]
+    parts.append("</svg>")
+    svg_str = "\n".join(parts)
 
-    def load_csv(path):
-        raw = pd.read_csv(path, header=None)
-        # If first row looks like a header (contains 'index_name'), skip it
-        if str(raw.iloc[0, 0]).strip() == "index_name":
-            raw = raw.iloc[1:].reset_index(drop=True)
-        # Assign column names to as many columns as exist
-        raw.columns = COLS[:len(raw.columns)]
-        # Ensure numeric columns are numeric
-        for col in COLS[1:8]:
-            if col in raw.columns:
-                raw[col] = pd.to_numeric(raw[col], errors="coerce")
-        return raw
-
-    df_10 = load_csv(csv_10) if has_10 else pd.DataFrame()
-    df_90 = load_csv(csv_90) if has_90 else pd.DataFrame()
-
-    tput_10, size_10, hyper_10 = (extract(df_10) if has_10
-                                  else ({i: 0 for i in INDEXES},)*3)
-    tput_90, size_90, hyper_90 = (extract(df_90) if has_90
-                                  else ({i: 0 for i in INDEXES},)*3)
-
-    # -- terminal summary ------------------------------------------------------
-    print(f"\n=== {tag.upper()} — 10% insert (90% lookup) ===")
-    print(f"{'Index':<22} {'Throughput (Mops/s)':>20} {'Size (GB)':>10}  Hyperparams")
-    for idx in INDEXES:
-        print(f"{idx:<22} {tput_10[idx]:>20.3f} {size_10[idx]:>10.2f}  {hyper_10[idx]}")
-
-    print(f"\n=== {tag.upper()} — 90% insert (10% lookup) ===")
-    print(f"{'Index':<22} {'Throughput (Mops/s)':>20} {'Size (GB)':>10}  Hyperparams")
-    for idx in INDEXES:
-        print(f"{idx:<22} {tput_90[idx]:>20.3f} {size_90[idx]:>10.2f}  {hyper_90[idx]}")
-
-    # -- 2×2 bar plots ---------------------------------------------------------
-    fig, axs = plt.subplots(2, 2, figsize=(11, 8))
-    fig.suptitle(f"Milestone 3: Async Hybrid — {tag.upper()} Dataset",
-                 fontsize=12, fontweight="bold", y=1.01)
-
-    bar_plot(axs[0, 0], tput_10,
-             "Throughput — 10% Insert (90% Lookup)",
-             "Throughput (Mops/s)", annotate=hyper_10)
-    bar_plot(axs[0, 1], size_10,
-             "Index Size — 10% Insert (90% Lookup)",
-             "Index Size (GB)")
-    bar_plot(axs[1, 0], tput_90,
-             "Throughput — 90% Insert (10% Lookup)",
-             "Throughput (Mops/s)", annotate=hyper_90)
-    bar_plot(axs[1, 1], size_90,
-             "Index Size — 90% Insert (10% Lookup)",
-             "Index Size (GB)")
-
-    plt.tight_layout()
-    out_path = os.path.join(OUTPUT_DIR, f"milestone3_{tag}.png")
-    plt.savefig(out_path, dpi=150, bbox_inches="tight")
-    print(f"\nPlot saved → {out_path}")
-    plt.close(fig)
-    return True
+    if _HAVE_CAIRO:
+        cairosvg.svg2png(bytestring=svg_str.encode(),
+                         write_to=path, scale=3.0)
+    else:
+        # Fallback: write SVG so the user can convert manually
+        svg_path = path.replace(".png", ".svg")
+        with open(svg_path, "w") as f:
+            f.write(svg_str)
+        print(f"  cairosvg not found — saved SVG to {svg_path}")
+        print("  Install with: pip install cairosvg")
 
 
-# ---------------------------------------------------------------------------
+def print_summary(dataset_label, tput10, size10, tput90, size90):
+    print(f"\n{'═'*54}")
+    print(f"  {dataset_label}")
+    for wl_label, tput, size in [
+        ("10% Insert (90% Lookup)", tput10, size10),
+        ("90% Insert (10% Lookup)", tput90, size90),
+    ]:
+        print(f"  {'─'*50}")
+        print(f"  {wl_label}")
+        print(f"  {'Index':<22} {'Mops/s':>9} {'Size GB':>9}")
+        best = max(tput.values()) if tput else 0
+        for idx in INDEXES:
+            flag = " ★" if tput.get(idx, 0) == best else ""
+            print(f"  {idx:<22} {tput.get(idx,0):>9.3f} {size.get(idx,0):>9.2f}{flag}")
+
+
 def main():
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
     summary_rows = []
 
-    for tag, dataset in DATASETS.items():
-        ok = process_dataset(tag, dataset)
-        if ok:
-            # collect for combined CSV
-            for wl, suffix in WORKLOAD_SUFFIX.items():
-                csv = os.path.join(RESULTS_DIR,
-                                   f"{dataset}_{suffix}_results_table.csv")
-                if not os.path.exists(csv):
-                    continue
-                df = pd.read_csv(csv)
-                tput, size, hyper = extract(df)
-                for idx in INDEXES:
-                    summary_rows.append({
-                        "dataset":    tag,
-                        "workload":   wl,
-                        "index":      idx,
-                        "throughput": round(tput[idx], 4),
-                        "size_gb":    round(size[idx], 3),
-                        "hyperparams": hyper[idx],
-                    })
+    for dataset in DATASETS:
+        label = DATASET_LABELS[dataset]
+        rows  = load_dataset(dataset)
 
-    if summary_rows:
-        csv_out = os.path.join(OUTPUT_DIR, "milestone3_summary.csv")
-        pd.DataFrame(summary_rows).to_csv(csv_out, index=False)
-        print(f"\nCombined summary CSV → {csv_out}")
+        tput10, size10, hyper10 = extract(rows["10pct"])
+        tput90, size90, hyper90 = extract(rows["90pct"])
+
+        print_summary(label, tput10, size10, tput90, size90)
+
+        ds_short  = dataset.split("_")[0]   # fb / books / osmc
+        png_path  = os.path.join(OUTPUT_DIR, f"milestone3_{ds_short}.png")
+        write_dataset_png(png_path, label, tput10, size10, hyper10, tput90, size90, hyper90)
+        print(f"  → {png_path}")
+
+        for wl, tput, size in [("10pct", tput10, size10), ("90pct", tput90, size90)]:
+            for idx in INDEXES:
+                summary_rows.append([label, wl, idx,
+                                     f"{tput.get(idx,0):.4f}",
+                                     f"{size.get(idx,0):.3f}"])
+
+    summary_path = os.path.join(OUTPUT_DIR, "milestone3_summary.csv")
+    with open(summary_path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["dataset", "workload", "index", "throughput_mops", "size_gb"])
+        w.writerows(summary_rows)
+    print(f"\nSummary CSV → {summary_path}")
 
 
 if __name__ == "__main__":

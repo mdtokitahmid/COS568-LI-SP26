@@ -28,12 +28,12 @@ DATASET   = "fb_100M_public_uint64"
 MIX_10PCT = f"{DATASET}_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix_results_table.csv"
 MIX_90PCT = f"{DATASET}_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix_results_table.csv"
 
-INDEXES = ["DynamicPGM", "LIPP", "HybridPGMLIPP", "HybridPGMLIPPAsync"]
+INDEXES = ["DynamicPGM", "LIPP", "HybridPGMLIPP", "ARIA"]
 COLORS  = {
     "DynamicPGM":        "#4C72B0",
     "LIPP":              "#DD8452",
     "HybridPGMLIPP":     "#55A868",
-    "HybridPGMLIPPAsync":"#C44E52",
+    "ARIA":"#C44E52",
 }
 
 

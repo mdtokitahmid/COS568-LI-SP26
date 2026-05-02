@@ -1,0 +1,28 @@
+=== Dataset: books_100M_public_uint64 | Index: HybridPGMLIPPAsync | Workload: ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/books_100M_public_uint64 in 320 ms (312.5 M values/s)
+read 2000000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix in 21 ms (95.2381 M values/s)
+read 99800000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix_bulkload in 1191 ms (83.7951 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,9581613,7704916,5449904index size,11818525976Throughput: ,24.111,22.8617,22.9824Variant: ,64Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5439394,5471393,5478347index size,11818525976Throughput: ,22.5576,22.7083,22.5858Variant: ,128Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5674769,5435346,5448638index size,11818525976Throughput: ,22.8676,23.0012,22.771Variant: ,256Variant: ,2000000
+=== Dataset: books_100M_public_uint64 | Index: HybridPGMLIPPAsync | Workload: ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/books_100M_public_uint64 in 297 ms (336.7 M values/s)
+read 2000000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix in 33 ms (60.6061 M values/s)
+read 98200000 values from ./data/books_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix_bulkload in 972 ms (101.029 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,9541495,7496854,5305981index size,11686069032Throughput: ,3.47694,3.48913,3.5298Variant: ,64Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5315735,5326715,5319528index size,11686067432Throughput: ,3.4905,3.48547,3.49274Variant: ,128Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5368846,5346943,5357545index size,11686067012Throughput: ,3.49377,3.52128,3.53194Variant: ,256Variant: ,2000000
+
+=== Done: HybridPGMLIPPAsync on books_100M_public_uint64 ===

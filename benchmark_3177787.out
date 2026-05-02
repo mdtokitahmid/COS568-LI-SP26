@@ -1,0 +1,28 @@
+=== Dataset: fb_100M_public_uint64 | Index: HybridPGMLIPPAsync | Workload: ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/fb_100M_public_uint64 in 315 ms (317.46 M values/s)
+read 2000000 values from ./data/fb_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix in 21 ms (95.2381 M values/s)
+read 99800000 values from ./data/fb_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix_bulkload in 660 ms (151.212 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,9600479,7388809,5213240index size,12700947080Throughput: ,19.1442,18.1178,18.0119Variant: ,64Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5203014,5240123,5249622index size,12700947080Throughput: ,18.0233,17.925,17.9499Variant: ,128Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5214482,5256471,5197215index size,12700947080Throughput: ,17.8501,18.0211,17.9981Variant: ,256Variant: ,2000000
+=== Dataset: fb_100M_public_uint64 | Index: HybridPGMLIPPAsync | Workload: ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/fb_100M_public_uint64 in 298 ms (335.57 M values/s)
+read 2000000 values from ./data/fb_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix in 20 ms (100 M values/s)
+read 98200000 values from ./data/fb_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix_bulkload in 611 ms (160.72 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,9271981,7325436,5260039index size,12538258780Throughput: ,3.37283,3.37285,3.3687Variant: ,64Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5248011,5205107,5286620index size,12538249840Throughput: ,3.35612,3.42139,3.41389Variant: ,128Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,5218631,5216300,5243907index size,12538247740Throughput: ,3.46078,3.46647,3.41737Variant: ,256Variant: ,2000000
+
+=== Done: HybridPGMLIPPAsync on fb_100M_public_uint64 ===

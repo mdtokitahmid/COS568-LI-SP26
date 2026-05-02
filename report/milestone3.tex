@@ -1,0 +1,90 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=0.85in, top=0.7in, bottom=0.7in]{geometry}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{caption}
+\usepackage{hyperref}
+
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue}
+
+\setlength{\parskip}{4pt}
+
+\title{\vspace{-1em}\textbf{Milestone 3: ARIA -- Adaptive Runtime Index with Async-flush}\vspace{-0.5em}}
+\author{Md Toki Tahmid \quad COS568, Princeton University}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1em}
+
+\section*{Approach}
+
+The Milestone 2 naive hybrid flushes DPGM into LIPP synchronously, stalling
+every insert that triggers the threshold for the full duration of the migration.
+ARIA fixes this with two ideas: (1) the flush runs on a background thread so
+inserts are never blocked, and (2) the index decides at runtime whether to use
+the write buffer at all.
+
+\textbf{Runtime profiling.} During the first 1024 operations after bulk load,
+ARIA counts inserts and lookups. If inserts exceed 50\%, it stays in
+\texttt{WRITE\_BUFFERED} mode; otherwise it drains the DPGM buffer into LIPP
+once and switches to \texttt{READ\_OPTIMIZED} mode permanently. The profiling
+flag is cleared after this decision and never checked again.
+
+\textbf{WRITE\_BUFFERED mode.} Inserts go into \texttt{dpgm\_active\_}.
+When it reaches \texttt{flush\_interval} keys (2M), ARIA atomically moves it
+to \texttt{dpgm\_flushing\_}, resets \texttt{dpgm\_active\_} to an empty
+buffer, and spawns a background thread to drain \texttt{dpgm\_flushing\_} into
+LIPP one key at a time. Incoming inserts continue into the fresh buffer without
+waiting. Lookups check LIPP, then \texttt{dpgm\_active\_}, then
+\texttt{dpgm\_flushing\_}. A \texttt{shared\_mutex} protects LIPP during the
+flush: the background thread holds a \texttt{unique\_lock}; concurrent lookups
+acquire a \texttt{shared\_lock} only when the \texttt{flush\_in\_progress\_}
+atomic flag (with acquire/release ordering) is set.
+
+\textbf{READ\_OPTIMIZED mode.} Both inserts and lookups go directly to LIPP.
+The hot path is a single predicted branch with no locking overhead, equivalent
+to running pure LIPP. The internal LIPP instance (MyLIPP) adds one
+\texttt{\_\_builtin\_expect} hint to the \texttt{find()} traversal loop,
+giving roughly 2.6\% higher throughput over unmodified LIPP on the FB dataset.
+
+\textbf{No keys lost.} Before switching to READ\_OPTIMIZED, all keys in
+\texttt{dpgm\_active\_} are inserted into LIPP. During an async flush, keys
+in \texttt{dpgm\_flushing\_} remain reachable via the lookup path until the
+thread finishes. No key is ever discarded.
+
+\textbf{Hyperparameters.} \texttt{pgm\_error} was swept over \{64, 128, 256\}
+with \texttt{flush\_interval} fixed at 2M. The variant with the highest average
+throughput across 3 runs was selected per workload.
+
+\section*{Results}
+
+Figures~\ref{fig:fb}--\ref{fig:osmc} show throughput (Mops/s) and index size
+(GB) for both workloads across all three datasets. ARIA (labeled
+\textit{HybridPGMLIPPAsync}) outperforms DPGM, LIPP, and the M2 naive hybrid
+on both workloads across all datasets.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.82\linewidth]{../analysis_results/milestone3_fb.png}
+    \caption{Facebook (FB) dataset.}
+    \label{fig:fb}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.82\linewidth]{../analysis_results/milestone3_books.png}
+    \caption{Books dataset.}
+    \label{fig:books}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.82\linewidth]{../analysis_results/milestone3_osmc.png}
+    \caption{OSMC dataset.}
+    \label{fig:osmc}
+\end{figure}
+
+\end{document}

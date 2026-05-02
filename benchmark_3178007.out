@@ -1,0 +1,68 @@
+=== Dataset: osmc_100M_public_uint64 | Index: DynamicPGM | Workload: ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/osmc_100M_public_uint64 in 323 ms (309.598 M values/s)
+read 2000000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix in 23 ms (86.9565 M values/s)
+read 99800000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix_bulkload in 694 ms (143.804 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: DynamicPGM,4888819,4764413,4783522index size,1700920428Throughput: ,0.839038,0.857522,0.872932Variant: ,BinarySearchVariant: ,256
+Variable rsum was: 0
+RESULT: DynamicPGM,5132512,5152100,5110954index size,1703719788Throughput: ,0.898995,0.864766,0.896164Variant: ,BinarySearchVariant: ,64
+Variable rsum was: 0
+RESULT: DynamicPGM,4883073,4893210,4888391index size,1701834168Throughput: ,0.872501,0.869646,0.861371Variant: ,BinarySearchVariant: ,128
+=== Dataset: osmc_100M_public_uint64 | Index: LIPP | Workload: ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/osmc_100M_public_uint64 in 293 ms (341.297 M values/s)
+read 2000000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix in 20 ms (100 M values/s)
+read 99800000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix_bulkload in 617 ms (161.75 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: LIPP,14418109,9647737,7452620index size,20602887232Throughput: ,15.0622,14.2383,14.8289
+=== Dataset: osmc_100M_public_uint64 | Index: HybridPGMLIPP | Workload: ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/osmc_100M_public_uint64 in 293 ms (341.297 M values/s)
+read 2000000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix in 20 ms (100 M values/s)
+read 99800000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix_bulkload in 620 ms (160.968 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,14466770,9584955,7475189index size,20589188432Throughput: ,1.1304,1.07257,1.08571Variant: ,64Variant: ,1
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7433731,7460012,7430182index size,20589188432Throughput: ,1.05643,1.06759,1.09007Variant: ,128Variant: ,1
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7437468,7446855,7555286index size,20589188432Throughput: ,1.08828,1.09385,1.08162Variant: ,256Variant: ,1
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7475271,7507395,7429036index size,20589188432Throughput: ,1.08203,1.07678,1.07883Variant: ,64Variant: ,5
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7431030,7406031,7471684index size,20589188432Throughput: ,1.08846,1.0831,1.08713Variant: ,128Variant: ,5
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7478623,7528154,7501753index size,20589188432Throughput: ,1.0907,1.08673,1.08603Variant: ,256Variant: ,5
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7425576,7443216,7463832index size,20589188432Throughput: ,1.07654,1.08545,1.07199Variant: ,64Variant: ,10
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7454502,7445704,7436145index size,20589188432Throughput: ,1.08144,1.06854,1.09506Variant: ,128Variant: ,10
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7418748,7399773,7523259index size,20589188432Throughput: ,1.08751,1.0898,1.07352Variant: ,256Variant: ,10
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7491061,7478682,7376752index size,20589188432Throughput: ,1.09426,1.09467,1.1131Variant: ,64Variant: ,20
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7331082,7314708,7437193index size,20589188432Throughput: ,1.10972,1.1115,1.11458Variant: ,128Variant: ,20
+Variable rsum was: 0
+RESULT: HybridPGMLIPP,7393427,7380750,7419240index size,20589188432Throughput: ,1.10967,1.11767,1.11114Variant: ,256Variant: ,20
+=== Dataset: osmc_100M_public_uint64 | Index: HybridPGMLIPPAsync | Workload: ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
+Repeating lookup code 3 time(s).
+Using 1 thread(s).
+read 100000000 values from ./data/osmc_100M_public_uint64 in 281 ms (355.872 M values/s)
+read 2000000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix in 19 ms (105.263 M values/s)
+read 99800000 values from ./data/osmc_100M_public_uint64_ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix_bulkload in 592 ms (168.581 M values/s)
+Data is unique.
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,14721120,9599911,7424243index size,20602887448Throughput: ,14.9756,14.8361,14.848Variant: ,64Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,7415720,7450572,7467712index size,20602887448Throughput: ,14.8381,14.5995,14.8736Variant: ,128Variant: ,2000000
+Variable rsum was: 0
+RESULT: HybridPGMLIPPAsync,7425237,7447247,7390364index size,20602887448Throughput: ,14.8884,14.8883,15.1297Variant: ,256Variant: ,2000000
+
+=== Done: all methods on osmc_100M_public_uint64 | ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix ===
