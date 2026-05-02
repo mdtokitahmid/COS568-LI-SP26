@@ -17,4 +17,10 @@ fb*.csv
 results/
 
 analysis_results/
-*.png
+*.pngbenchmark_*.out
+benchmark_*.err
+scripts/__pycache__/
+report/*.aux
+report/*.log
+report/*.out
+build/
