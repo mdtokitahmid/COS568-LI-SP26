@@ -11,18 +11,18 @@ set -e
 PROJECT_DIR="/home/mt3204/Academic/COS568/Project/COS568-LI-SP26"
 
 DATASETS=(
-    # "fb_100M_public_uint64"
+    "fb_100M_public_uint64"
     "books_100M_public_uint64"
-    # "osmc_100M_public_uint64"
+    "osmc_100M_public_uint64"
 )
 
 WORKLOAD_SUFFIXES=(
-    # "ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix"
+    "ops_2M_0.000000rq_0.500000nl_0.100000i_0m_mix"
     "ops_2M_0.000000rq_0.500000nl_0.900000i_0m_mix"
 )
 
 WORKLOAD_LABELS=(
-    # "10pct"
+    "10pct"
     "90pct"
 )
 
